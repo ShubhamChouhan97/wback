@@ -5,9 +5,10 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 require("dotenv").config(); // Ensure environment variables are loaded
 const generateToken = require("./tokenController");
-let counter = 1;
-// register route
 
+const { sendResetEmail } = require('../utils/sendEmail.js');
+// const { error } = require("console");
+// register route
 exports.register = async (req, res) => {
   try {
     const { userName, email, password } = req.body;
@@ -16,8 +17,19 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: "Username, email, and password are required" });
     }
 
-    const existingUser = await User.findOne({ email }).lean();
+     const existingUser = await User.findOne({ email }).lean();
+    // if (existingUser) {
+    //    existingUser.accountstatus =  "active";
+    //   return res.status(400).json({ message: "User already exists or activated" });
+    // }
+
     if (existingUser) {
+      if (existingUser.accountstatus === "inactive") {
+     
+        await User.updateOne({ email }, { $set: { accountstatus: "active" } });
+        console.log("ssssss");
+        return res.status(200).json({ message: "User successfully" });
+      }
       return res.status(400).json({ message: "User already exists" });
     }
 
@@ -25,6 +37,7 @@ exports.register = async (req, res) => {
     const existingUsers = await User.find().select("_id contacts").lean();
 
     const newUser = new User({
+      accountstatus:"active",
       userName,
       email,
       password: hashedPassword,
@@ -91,10 +104,15 @@ exports.login = async (req, res) => {
     }
 
     const user = await User.findOne({ email });
-     //console.log(user)
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
+    if(user.accountstatus == "inactive")
+    {
+      return res.status(400).json({ message: "Account Not found" });
+    }
+     //console.log(user)
+   
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
@@ -247,23 +265,35 @@ exports.updatedata = async (req, res) => {
 // Server-side: Express route to handle account deletion
 exports.DeleteAccount = async (req, res) => {
   const userId = req.body.id;
+  const token = req.cookies.token;
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized: No token provided" });
+      }
+      // Decode the token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      if (!decoded || !decoded.email) {
+        return res.status(401).json({ message: "Unauthorized: Invalid token" });
+        }
 
   // Check if the userId is a valid ObjectId
   if (!mongoose.Types.ObjectId.isValid(userId)) {
     return res.status(400).json({ message: "Invalid user ID" });
   }
 
-  console.log("User ID:", userId);
+  // console.log("User ID:", userId);
 
   try {
     // Attempt to delete the user by ID using the async/await pattern
-    const data = await User.findByIdAndDelete(userId);
-
+   // const data = await User.findByIdAndDelete(userId);
+     const userdelete = await User.findById(userId);
+    
+   
     // Check if the user was found and deleted
-    if (!data) {
+    if (!userdelete) {
       return res.status(404).json({ message: "User not found" });
     }
-
+    userdelete.accountstatus = "inactive";
+    userdelete.save();
     // Successfully deleted the user
     res.json({ message: "Account deleted successfully" });
   } catch (err) {
@@ -272,3 +302,49 @@ exports.DeleteAccount = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+// forgot pass 
+exports.forgotpass = async (req, res) => {
+  const email = req.body.email;
+console.log("ssssss",email);
+try {
+  const user = await User.findOne({ email });
+  //console.log("user",user);
+  if (!user) return res.status(404).json({ message: 'User not found' });
+
+  const token = generateToken(user);
+  //console.log("gen",token);
+  const resetLink = `${process.env.CLIENT_URL}/reset-password/${token}`;
+//console.log("restet",resetLink);
+try{
+  await sendResetEmail(email, resetLink);
+}catch(err){
+  console.log(err);
+}
+ 
+  res.status(200).json({ message: 'Password reset email sent!' });
+} catch (error) {
+  res.status(500).json({ message: 'Server error' });
+}
+}
+
+// verify token for forgat password
+
+exports.verifytoken = async (req, res) => {
+ const { token } = req.query;
+   // console.log("tokjen",token);
+   try {
+     // Verify the token using the JWT_SECRET
+     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+     // If the token is valid and has not expired, send a success message
+     res.status(200).json({ message: 'Link Verified' });
+ 
+   } catch (error) {
+    // Check if the error is due to token expiration
+     if (error.name === 'TokenExpiredError') {
+       return res.status(400).json({ message: "Link has expired" });
+     } 
+     // General error handler for other JWT-related issues
+     return res.status(400).json({ message: "Invalid Link" });
+   }
+}

@@ -14,6 +14,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    accountstatus:{
+      type:String,
+      required:true,
+      default:null,
+    },
     email: {
       type: String,
       required: true,
@@ -25,7 +30,7 @@ const userSchema = new mongoose.Schema(
     },
     dp: {
       type: String,
-      default: null,
+      default:"/uploads/profile/1741693932747.png",
     },
     about: {
       type: String,
@@ -52,6 +57,10 @@ const userSchema = new mongoose.Schema(
         lastMessage: {
           type: String,
           default: "Start Chat",
+        },
+        lastseen:{
+          type: Date, // Keep this as Date (MongoDB can handle it)
+          default: null,
         },
       },
     ],
@@ -91,3 +100,4 @@ userSchema.pre("save", async function (next) {
 
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 module.exports = User;
+

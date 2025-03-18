@@ -1,22 +1,32 @@
 
-
-
 const express = require('express');
-const { register, login, logout, getProtectedData, detail, updatedata,idget,DeleteAccount } = require('../controllers/authController');
+const { register, login, logout, getProtectedData, detail, updatedata,idget,DeleteAccount,forgotpass,verifytoken } = require('../controllers/authController');
 const authenticate = require('../middleware/authMiddleware'); // Import authentication middleware
-
+const tokenverify = require('../middleware/tokenverify')
+const {resetPassword} = require('../utils/restpassword');
+//const { console } = require('inspector');
 const router = express.Router();
+
 // router.use((req, res, next) => {
-//     console.log(`Incoming request: ${req.method} ${req.url}`);
-//     next();
-//   });
+//   const { method, url } = req;
+//   const logMessage = `Incoming request: ${method} ${url}`;
+//   console.log(logMessage);
+//   next();
+// });
+
 // // Public Routes
+router.post('/authenticate', tokenverify);
 router.post('/register', register);
 router.post('/login', login);
-router.post('/logout', logout);
+router.post('/logout',authenticate,logout);
+// router.post('/reset-password',resetPassword);
+router.post('/resetpassword', resetPassword);
 
+router.get("/verifyresettoken",verifytoken);
+
+router.post('/forgotpass',forgotpass);
 // Protected Routes (Require Authentication)
-router.post('/delete',DeleteAccount );
+router.post('/delete',authenticate,DeleteAccount );
 router.get('/idget',authenticate,idget)
 router.get('/protected', authenticate, getProtectedData);
 router.post('/detail', authenticate, detail);  

@@ -19,6 +19,6 @@ const upload = multer({
 
 // Define the POST route for file uploads
 router.post("/uploadPic",uploadFile,uploadPic);
-router.post('/uploadProfilePic', authenticate, uploadMiddleware, uploadProfilePic);
+router.post('/uploadProfilePic',uploadMiddleware, uploadProfilePic);
 
 module.exports = router;

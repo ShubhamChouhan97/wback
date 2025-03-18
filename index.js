@@ -27,11 +27,11 @@ app.use("/uploads", express.static("uploads")); // Serve uploaded images
 dotenv.config();
 app.use(bodyParser.json({ limit: "50mb" })); 
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
-app.use((req, res, next) => {
-  console.log(`Incoming request: ${req.method} ${req.url}`);
-  // console.log(`response: ${res.statusCode}`);
-  next();
-});
+// app.use((req, res, next) => {
+//   console.log(`Incoming request: ${req.method} ${req.url}`);
+//   // console.log(`response: ${res.statusCode}`);
+//   next();
+// });
 
 app.use(cors({
   origin: '*', // Allow all origins (not recommended for production)
@@ -70,7 +70,9 @@ io.on("connection", (socket) => {
       if (user) {
         user.livestatus = "Online";
         await user.save();
+        
         io.emit("livestatus", { userId: id, livestatus: "Online" });
+        io.emit("chat_updated");
       }
     } catch (error) {
       console.error("Error updating online status:", error);
@@ -85,6 +87,7 @@ io.on("connection", (socket) => {
         user.livestatus = "Offline";
         await user.save();
         io.emit("livestatus", { userId: MyId, livestatus: "Offline" });
+        io.emit("chat_updated");
       }
     } catch (error) {
       console.error("Error updating offline status:", error);
@@ -147,14 +150,18 @@ io.on("connection", (socket) => {
         // Update unread count and last chat time
         if (receiverContact) {
           receiverContact.unreadCount = 0;
+          senderContact.lastChatTime = new Date();
+          // receiverContact.lastseen=new Date();
           receiverContact.lastChatTime = new Date();
         }
-        if (senderContact) senderContact.lastChatTime = new Date();
-  
-        await senderUser.save();
-        await reciverUser.save();
-        
-  
+        if (senderContact)
+          {  receiverContact.lastseen=new Date();
+            // senderContact.lastChatTime = new Date();
+          } 
+   
+          await senderUser.save();
+          await reciverUser.save();
+
         io.to(receiverSocketId).emit("privateMessage", {
           senderIdbyserver: senderId,
           message,
@@ -162,6 +169,7 @@ io.on("connection", (socket) => {
           time: new Date().toISOString(),
         });
         io.emit("chat_updated");
+       
       } else {
         // If receiver is offline, increment unread count
         if (receiverContact) receiverContact.unreadCount++;

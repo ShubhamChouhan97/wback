@@ -1,6 +1,7 @@
 const express = require('express');
 const { getAllUsers,ofuser,messag } = require('../controllers/chatController'); // Import controller
-
+const authenticate = require('../middleware/authMiddleware'); // Import authentication middleware
+const tokenverify = require('../middleware/tokenverify')
 const router = express.Router();
 
 // // Middleware to log incoming requests
@@ -11,7 +12,7 @@ const router = express.Router();
 // });
 
 // Route to fetch all users using the controller function
-router.get('/allusers', getAllUsers);
-router.post('/ofuser',ofuser);
+router.post('/allusers',authenticate,getAllUsers);
+router.post('/ofuser',authenticate,ofuser);
 router.post('/messages',messag);
 module.exports = router;

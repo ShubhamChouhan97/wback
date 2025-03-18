@@ -11,7 +11,7 @@ const format12HourTime = (date) => {
   };
   
 const getAllUsers = async (req, res) => {
-    try {
+    try { 
         // Extract token from cookies
         const token = req.cookies.token;
         if (!token) {
@@ -26,7 +26,7 @@ const getAllUsers = async (req, res) => {
 
         // Find the user and populate the contacts array along with messages
         const user = await User.findOne({ email: decoded.email })
-            .populate("contacts.contactpersonid", "userName email dp about")
+            .populate("contacts.contactpersonid", "userName email dp about livestatus")
             .populate("contacts.messages"); // Populate messages array with full objects
 
         if (!user) {
@@ -37,7 +37,6 @@ const getAllUsers = async (req, res) => {
         const connections = await Promise.all(user.contacts.map(async (contact) => {
             // Fetch all messages from the referenced Message model
             const messages = await Message.find({ _id: { $in: contact.messages } });
-   console.log("messages");
             // console.log("sss",messages);
 
             return {
@@ -47,6 +46,8 @@ const getAllUsers = async (req, res) => {
                 dp: contact.contactpersonid.dp,
                 about: contact.contactpersonid.about,
                 unreadCount: contact.unreadCount,
+                livestatus: contact.contactpersonid.livestatus, 
+               // lastseen:format12HourTime(contact.lastseen),
                  // Store the retrieved message objects
                 lastMessage: contact.lastMessage,
                 chattime: format12HourTime(contact.lastChatTime),
@@ -64,13 +65,13 @@ const getAllUsers = async (req, res) => {
 const ofuser = async(req,res)=>{
         // Check if a token is provided in the Authorization header
             const {reciveratid,senderatid }= req.body;
-            console.log("reciverid",reciveratid);
-            console.log("senderid",senderatid);
+           // console.log("reciverid",reciveratid);
+           // console.log("senderid",senderatid);
             const givenuser = await User.findById(reciveratid);
            // console.log("givenuser:",givenuser);
 
 
-            const userObject = givenuser.toObject();
+            const userObject = givenuser.toObject(); 
             let contact = userObject.contacts.find(
                 (c) => c.contactpersonid.toString() === senderatid
                );
@@ -83,9 +84,10 @@ const ofuser = async(req,res)=>{
          delete userObject.createdAt; 
              delete userObject.updatedAt;
              userObject.chat = contact ? contact.messages : [];
+             userObject.lastseen = contact ? format12HourTime(contact.lastseen) : '';
 
 
-         console.log("givenuser:", userObject);
+         //console.log("givenuser:", userObject);
 
             res.status(200).json(userObject);
      
