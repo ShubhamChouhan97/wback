@@ -99,7 +99,7 @@ exports.register = async (req, res) => {
       console.log(err);
     }
 
-    res.status(201).json({ message: "User registered successfully", userId: newUser._id });
+    res.status(201).json({ message: "User registered successfully,Check you Mail for Account Activate", userId: newUser._id });
   } catch (error) {
     console.error("❌ Register Error:", error);
     res.status(500).json({ message: "Error registering user", error: error.message });
@@ -122,7 +122,7 @@ exports.login = async (req, res) => {
     }
     if(user.accountstatus == "inactive")
     {
-      return res.status(400).json({ message: "Account Not found or Not Acctivate " });
+      return res.status(400).json({ message: "Account Not found or Not Acctivate Activate Through Mail Recived !" });
     }
      //console.log(user)
    
