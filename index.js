@@ -36,7 +36,7 @@ app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 
 
 app.use(cors({
-  origin: 'https://yapyup.onrender.com', // Allow all origins (not recommended for production)
+  origin: '*', // Allow all origins (not recommended for production)
   credentials: true, // Allow cookies and authentication headers
   methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed HTTP methods
   allowedHeaders: ['Content-Type', 'Authorization'] // Allowed headers
