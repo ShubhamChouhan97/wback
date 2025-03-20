@@ -14,6 +14,7 @@ const authRoutes = require('./routes/authRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 
+process.env.TZ = 'Asia/Kolkata';
 
 const DB = require('./config/db');
 const User = require("./models/User");
