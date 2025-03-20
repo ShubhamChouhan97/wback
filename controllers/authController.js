@@ -5,7 +5,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 require("dotenv").config(); // Ensure environment variables are loaded
 const generateToken = require("./tokenController");
-
+const { verifyaccount } = require('../utils/verifyaccount.js')
 const { sendResetEmail } = require('../utils/sendEmail.js');
 // const { error } = require("console");
 // register route
@@ -26,9 +26,14 @@ exports.register = async (req, res) => {
     if (existingUser) {
       if (existingUser.accountstatus === "inactive") {
      
-        await User.updateOne({ email }, { $set: { accountstatus: "active" } });
-        console.log("ssssss");
-        return res.status(200).json({ message: "User successfully" });
+        const token = generateToken(existingUser);
+        const resetLink = `${process.env.CLIENT_URL}/verify/${token}`;
+        try{
+          await verifyaccount(existingUser,resetLink);
+        }catch(err){
+          console.log(err);
+        }
+        return res.status(200).json({ message: "Acctivation Link share Succefully " });
       }
       return res.status(400).json({ message: "User already exists" });
     }
@@ -37,7 +42,7 @@ exports.register = async (req, res) => {
     const existingUsers = await User.find().select("_id contacts").lean();
 
     const newUser = new User({
-      accountstatus:"active",
+      accountstatus:"inactive",
       userName,
       email,
       password: hashedPassword,
@@ -80,10 +85,18 @@ exports.register = async (req, res) => {
 
     // Save the updated newUser contacts
     await newUser.save();
-
+     
     // Perform bulk update to add new user to existing users' contact lists
     if (bulkUpdates.length > 0) {
       await User.bulkWrite(bulkUpdates);
+    }
+    const token = generateToken(newUser);
+
+    const resetLink = `${process.env.CLIENT_URL}/verify/${token}`;
+    try{
+      await verifyaccount(newUser,resetLink);
+    }catch(err){
+      console.log(err);
     }
 
     res.status(201).json({ message: "User registered successfully", userId: newUser._id });
@@ -109,7 +122,7 @@ exports.login = async (req, res) => {
     }
     if(user.accountstatus == "inactive")
     {
-      return res.status(400).json({ message: "Account Not found" });
+      return res.status(400).json({ message: "Account Not found or Not Acctivate " });
     }
      //console.log(user)
    
@@ -306,18 +319,19 @@ exports.DeleteAccount = async (req, res) => {
 // forgot pass 
 exports.forgotpass = async (req, res) => {
   const email = req.body.email;
-console.log("ssssss",email);
+ //console.log("ssssss",email);
 try {
   const user = await User.findOne({ email });
   //console.log("user",user);
   if (!user) return res.status(404).json({ message: 'User not found' });
 
+   const name = user.userName;
   const token = generateToken(user);
   //console.log("gen",token);
   const resetLink = `${process.env.CLIENT_URL}/reset-password/${token}`;
 //console.log("restet",resetLink);
 try{
-  await sendResetEmail(email, resetLink);
+  await sendResetEmail(email, resetLink,name);
 }catch(err){
   console.log(err);
 }
