@@ -23,15 +23,17 @@ dotenv.config();
 
 app.use(express.json());
 app.use(cookieParser());
+app.use((req, res, next) => {
+  console.log(`Incoming request: ${req.method} ${req.url}`);
+  // console.log(`response: ${res.statusCode}`);
+  next();
+});
+
 app.use("/uploads", express.static("uploads")); // Serve uploaded images
 dotenv.config();
 app.use(bodyParser.json({ limit: "50mb" })); 
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
-// app.use((req, res, next) => {
-//   console.log(`Incoming request: ${req.method} ${req.url}`);
-//   // console.log(`response: ${res.statusCode}`);
-//   next();
-// });
+
 
 app.use(cors({
   origin: '*', // Allow all origins (not recommended for production)
