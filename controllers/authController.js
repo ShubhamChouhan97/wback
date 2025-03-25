@@ -109,6 +109,7 @@ exports.register = async (req, res) => {
 
 // Login User
 exports.login = async (req, res) => {
+  let token ;
   try {
     const { email, password } = req.body;
 
@@ -122,17 +123,19 @@ exports.login = async (req, res) => {
     }
     if(user.accountstatus == "inactive")
     {
-      return res.status(400).json({ message: "Account Not found or Not Acctivate Activate Through Mail Recived !" });
+      return res.status(400).json({ message: "Account Not found or Not Acctivate " });
     }
      //console.log(user)
-   
-
+   if(user.token === null)
+   {
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const token = generateToken(user);
+    token = generateToken(user);
+    user.token = token;  // Store only one session per user
+    
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -140,13 +143,41 @@ exports.login = async (req, res) => {
       sameSite: "None",
       maxAge: 3600000,
     });
-
-    // Convert Mongoose document to a plain object and exclude the password
     const userObject = user.toObject();
     delete userObject.password;
-   
+    delete userObject.__v;
+    await user.save();
 
-    res.json({ message: "Logged in successfully", token, user: userObject });
+    res.json({ message: "Login successfully", token, user: userObject });
+   }
+   else if(user.token !== null)
+   {
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    token = generateToken(user);
+    user.token = token;  // Store only one session per user
+         res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      maxAge: 3600000,
+    });
+
+    const userObject = user.toObject();
+    delete userObject.password;
+    delete userObject.__v;
+    await user.save();
+
+    res.json({ message: "Session Login successfully", token, user: userObject });
+   }
+
+    
+
+    // Convert Mongoose document to a plain object and exclude the password
+   
   } catch (error) {
     console.error("❌ Login Error:", error);
     res.status(500).json({ message: "Error logging in" });
@@ -154,7 +185,22 @@ exports.login = async (req, res) => {
 };
 
 // Logout User
-exports.logout = (req, res) => {
+exports.logout = async (req, res) => {
+  const email = req.body.user;
+  const value = req.body.value;
+ // console.log("value",value);
+ // console.log(email);
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+    }
+    if(value == 1)
+    {
+      user.token = null;
+      await user.save();
+    }
+   
+
   res.clearCookie("token");
   res.json({ message: "Logged out successfully" });
 };

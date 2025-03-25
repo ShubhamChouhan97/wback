@@ -1,11 +1,11 @@
 const jwt = require('jsonwebtoken');
-
+const User = require("../models/User");
 // Authentication Middleware
-const checktoken = (req, res, next) => {
+const tokenverify = async (req, res) => {
   // Extract token from cookies
   const token = req.cookies.token; 
-
-  console.log("Auth middleware called. Token:", token);
+  const email = req.body.user;
+  //console.log("Auth middleware called. at tokenverify");
 
   // Check if token is missing
   if (!token) {
@@ -15,11 +15,22 @@ const checktoken = (req, res, next) => {
   try {
     // Verify the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET); 
-    //console.log("DDDD",decoded);
-    // Attach decoded user info to request
+if(email === decoded.email)
+{
+  const user = await User.findOne({ email });
+  if(user.token === token)
+  {
+        return res.status(200).json({ message: "authorized" });
 
-    return res.status(200).json({ message: "authorized" });
-    // Proceed to the next middleware/controller
+  }
+  else{
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+ 
+}
+
+    
+    
     
   } catch (error) {
    // console.error("Token verification failed:", error);
@@ -27,4 +38,4 @@ const checktoken = (req, res, next) => {
   }
 };
 
-module.exports = checktoken;
+module.exports = tokenverify;
