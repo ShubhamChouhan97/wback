@@ -25,7 +25,7 @@ const tokenverify = (req, res, next) => {
   // Extract token from cookies
   const token = req.cookies.token; 
   const email = req.body.user;
-  console.log("Auth middleware called. Token:", token);
+  //console.log("Auth middleware called. Token:", token);
 
   // Check if token is missing
   if (!token) {
