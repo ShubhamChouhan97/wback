@@ -16,7 +16,7 @@ const router = express.Router();
 // });
 
 // // Public Routes
-router.get('/checktoken',checktoken)
+router.get('/checktoken', checktoken)
 router.post('/authenticate', tokenverify);
 router.post('/register', register);
 router.post('/login', login);
