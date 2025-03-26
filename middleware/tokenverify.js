@@ -16,9 +16,6 @@ const tokenverify = async (req, res) => {
     // Verify the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET); 
     const user = await User.findOne({ email });
-   // console.log("user token",user.token);
-   // console.log("token",token);
-
     if(user.token === token)
     {
           return res.status(200).json({ message: "authorized" });
@@ -26,12 +23,8 @@ const tokenverify = async (req, res) => {
     }
     else{
       return res.status(401).json({ message: "Unauthorized" });
-    }
-    //console.log("DDDD",decoded);
-    
-    
+    } 
   } catch (error) {
-   // console.error("Token verification failed:", error);
     return res.status(401).json({ message: "Unauthorized" });
   }
 };

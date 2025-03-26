@@ -6,7 +6,7 @@ const authenticate = async(req, res, next) => {
   const token = req.cookies.token; 
   const email = req.body.user;
   //console.log("Auth middleware called. Token:", token);
-//console.log("email",email);
+
   // Check if token is missing
   if (!token) {
     return res.status(401).json({ message: "Unauthorized - No token found" });
@@ -15,7 +15,6 @@ const authenticate = async(req, res, next) => {
   try {
     // Verify the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET); 
-    //console.log("DDDD",decoded);
     if(email===decoded.email)
     {
       const user = await User.findOne({ email });
@@ -26,9 +25,7 @@ const authenticate = async(req, res, next) => {
   else{
     return res.status(401).json({ message: "Unauthorized - Invalid token" });
   }
-
     }
-     
   } catch (error) {
     console.error("Token verification failed:", error);
     return res.status(401).json({ message: "Unauthorized - Invalid token" });

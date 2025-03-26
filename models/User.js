@@ -70,19 +70,6 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true, toJSON: { getters: true } }
 );
-
-// Middleware to update lastMessage before saving
-// userSchema.pre("save", async function (next) {
-//   for (let contact of this.contacts) {
-//     if (contact.messages.length > 0) {
-//       const lastMsg = await mongoose.model("Message").findById(contact.messages[contact.messages.length - 1]);
-//       contact.lastMessage = lastMsg ? lastMsg.text : "Start Chat";
-//     } else {
-//       contact.lastMessage = "Start Chat";
-//     }
-//   }
-//   next();
-// });
 userSchema.pre("save", async function (next) {
   for (let contact of this.contacts) {
     if (contact.messages.length > 0) {

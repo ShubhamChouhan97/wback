@@ -21,9 +21,7 @@ router.post('/authenticate', tokenverify);
 router.post('/register', register);
 router.post('/login', login);
 router.post('/logout',logout);
-// router.post('/reset-password',resetPassword);
 router.post('/resetpassword', resetPassword);
-
 router.get("/verifyresettoken",verifytoken);
 router.post("/activeaccount",activeaccount);
 router.post('/forgotpass',forgotpass);
