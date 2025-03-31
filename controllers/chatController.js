@@ -56,7 +56,6 @@ const getAllUsers = async (req, res) => {
     }
 };
 
-
 const ofuser = async(req,res)=>{
         // Check if a token is provided in the Authorization header
             const {reciveratid,senderatid }= req.body;
