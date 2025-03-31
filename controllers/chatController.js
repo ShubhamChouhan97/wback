@@ -34,12 +34,9 @@ const getAllUsers = async (req, res) => {
         }
 
         // Convert contacts into an array of objects with user details
-        const connections = await Promise.all(user.contacts.map(async (contact) => {
-            // Fetch all messages from the referenced Message model
-            const messages = await Message.find({ _id: { $in: contact.messages } });
-            // console.log("sss",messages);
-
-            return {
+        const connections = user.contacts
+            .filter(contact => contact.contactpersonid) // Filter out null values
+            .map(contact => ({
                 reciverobjectid: contact._id,
                 _id: contact.contactpersonid._id,
                 name: contact.contactpersonid.userName,
@@ -47,12 +44,9 @@ const getAllUsers = async (req, res) => {
                 about: contact.contactpersonid.about,
                 unreadCount: contact.unreadCount,
                 livestatus: contact.contactpersonid.livestatus, 
-               // lastseen:format12HourTime(contact.lastseen),
-                 // Store the retrieved message objects
                 lastMessage: contact.lastMessage,
                 chattime: format12HourTime(contact.lastChatTime),
-            };
-        }));
+            }));
 
         // Send the connections array
         res.status(200).json(connections);
@@ -61,6 +55,7 @@ const getAllUsers = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 };
+
 
 const ofuser = async(req,res)=>{
         // Check if a token is provided in the Authorization header
